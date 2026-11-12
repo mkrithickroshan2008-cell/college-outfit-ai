@@ -1,30 +1,52 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>College Outfit AI</title>
 
   <style>
     body {
       font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
       padding: 20px;
       text-align: center;
-      background: #f5f5f5;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
 
     h1 {
-      color: #222;
+      color: #111;
     }
 
     input {
       margin: 20px 0;
     }
 
+    #preview {
+      display: none;
+      width: 100%;
+      max-width: 350px;
+      margin: 20px auto;
+      border-radius: 15px;
+    }
+
     button {
-      padding: 12px 20px;
       background: black;
       color: white;
       border: none;
+      padding: 13px 25px;
       border-radius: 8px;
+      font-size: 16px;
       cursor: pointer;
     }
 
@@ -32,68 +54,184 @@
       background: #333;
     }
 
-    #preview {
+    #loading {
       display: none;
-      width: 250px;
-      max-width: 90%;
-      margin: 20px auto;
-      border-radius: 12px;
+      margin-top: 20px;
+      font-weight: bold;
     }
 
     #result {
-      font-size: 18px;
+      display: none;
+      margin-top: 20px;
+      padding: 20px;
+      background: #f1f1f1;
+      border-radius: 12px;
+      text-align: left;
+    }
+
+    .result-title {
+      font-size: 20px;
       font-weight: bold;
-      margin-top: 15px;
+      margin-bottom: 10px;
     }
   </style>
 </head>
 
 <body>
 
-  <h1>College Outfit AI</h1>
+  <div class="container">
 
-  <input
-    type="file"
-    id="photoInput"
-    accept="image/*"
-    onchange="showPhoto()"
-  >
+    <h1>College Outfit AI</h1>
 
-  <br><br>
+    <p>Upload your photo and get an AI outfit recommendation.</p>
 
-  <img id="preview">
+    <input
+      type="file"
+      id="photoInput"
+      accept="image/*"
+      onchange="previewPhoto()"
+    >
 
-  <br>
+    <img id="preview">
 
-  <button onclick="uploadPhoto()">
-    Upload a photo
-  </button>
+    <br>
 
-  <p id="result"></p>
+    <button onclick="analyzeOutfit()">
+      Analyze Outfit
+    </button>
+
+    <div id="loading">
+      AI is analyzing your photo...
+    </div>
+
+    <div id="result">
+
+      <div class="result-title">
+        AI Outfit Recommendation
+      </div>
+
+      <p id="recommendation"></p>
+
+    </div>
+
+  </div>
 
   <script>
-    function showPhoto() {
-      const photo = document.getElementById("photoInput").files[0];
-      const preview = document.getElementById("preview");
 
-      if (photo) {
-        preview.src = URL.createObjectURL(photo);
-        preview.style.display = "block";
-      }
-    }
+    function previewPhoto() {
 
-    function uploadPhoto() {
-      const photo = document.getElementById("photoInput").files[0];
-      const result = document.getElementById("result");
+      const file =
+        document.getElementById("photoInput").files[0];
 
-      if (!photo) {
-        result.textContent = "Please select a photo first.";
+      const preview =
+        document.getElementById("preview");
+
+      if (!file) {
         return;
       }
 
-      result.textContent =
-        "Recommended: Black shirt + Blue jeans + White sneakers";
+      preview.src = URL.createObjectURL(file);
+
+      preview.style.display = "block";
     }
+
+
+    async function analyzeOutfit() {
+
+      const file =
+        document.getElementById("photoInput").files[0];
+
+      const loading =
+        document.getElementById("loading");
+
+      const result =
+        document.getElementById("result");
+
+      const recommendation =
+        document.getElementById("recommendation");
+
+
+      if (!file) {
+
+        alert("Please select a photo first.");
+
+        return;
+      }
+
+
+      loading.style.display = "block";
+
+      result.style.display = "none";
+
+
+      try {
+
+        /*
+          IMPORTANT:
+
+          This is where the real AI API
+          connection will be added.
+
+          The API should receive the
+          uploaded image and return
+          the outfit recommendation.
+        */
+
+
+        const formData = new FormData();
+
+        formData.append("photo", file);
+
+
+        const response = await fetch(
+          "/api/analyze",
+          {
+            method: "POST",
+            body: formData
+          }
+        );
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            "AI server request failed"
+          );
+
+        }
+
+
+        const data =
+          await response.json();
+
+
+        recommendation.textContent =
+          data.recommendation;
+
+
+        result.style.display = "block";
+
+      }
+
+      catch (error) {
+
+        recommendation.textContent =
+          "AI connection is not configured yet. The website is ready, but the backend AI API still needs to be connected.";
+
+        result.style.display = "block";
+
+        console.error(error);
+
+      }
+
+      finally {
+
+        loading.style.display = "none";
+
+      }
+
+    }
+
   </script>
 
 </body>
