@@ -31,6 +31,20 @@
     button:hover {
       background: #333;
     }
+
+    #preview {
+      display: none;
+      width: 250px;
+      max-width: 90%;
+      margin: 20px auto;
+      border-radius: 12px;
+    }
+
+    #result {
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 15px;
+    }
   </style>
 </head>
 
@@ -38,15 +52,36 @@
 
   <h1>College Outfit AI</h1>
 
-  <input type="file" id="photoInput" accept="image/*">
+  <input
+    type="file"
+    id="photoInput"
+    accept="image/*"
+    onchange="showPhoto()"
+  >
 
   <br><br>
 
-  <button onclick="uploadPhoto()">Upload a photo</button>
+  <img id="preview">
+
+  <br>
+
+  <button onclick="uploadPhoto()">
+    Upload a photo
+  </button>
 
   <p id="result"></p>
 
   <script>
+    function showPhoto() {
+      const photo = document.getElementById("photoInput").files[0];
+      const preview = document.getElementById("preview");
+
+      if (photo) {
+        preview.src = URL.createObjectURL(photo);
+        preview.style.display = "block";
+      }
+    }
+
     function uploadPhoto() {
       const photo = document.getElementById("photoInput").files[0];
       const result = document.getElementById("result");
@@ -56,7 +91,8 @@
         return;
       }
 
-      result.textContent = "Photo selected successfully!";
+      result.textContent =
+        "Recommended: Black shirt + Blue jeans + White sneakers";
     }
   </script>
 
