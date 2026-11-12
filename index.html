@@ -1,238 +1,133 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+import OpenAI from "openai";
+import formidable from "formidable";
+import fs from "fs";
 
-  <title>College Outfit AI</title>
+export const config = {
+  api: {
+    bodyParser: false
+  }
+};
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      margin: 0;
-      padding: 20px;
-      text-align: center;
-    }
+export default async function handler(req, res) {
 
-    .container {
-      max-width: 500px;
-      margin: auto;
-      background: white;
-      padding: 25px;
-      border-radius: 15px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
+  if (req.method !== "POST") {
 
-    h1 {
-      color: #111;
-    }
+    return res.status(405).json({
+      error: "Method not allowed"
+    });
 
-    input {
-      margin: 20px 0;
-    }
+  }
 
-    #preview {
-      display: none;
-      width: 100%;
-      max-width: 350px;
-      margin: 20px auto;
-      border-radius: 15px;
-    }
 
-    button {
-      background: black;
-      color: white;
-      border: none;
-      padding: 13px 25px;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-    }
+  try {
 
-    button:hover {
-      background: #333;
-    }
+    const form = formidable({
+      multiples: false
+    });
 
-    #loading {
-      display: none;
-      margin-top: 20px;
-      font-weight: bold;
-    }
 
-    #result {
-      display: none;
-      margin-top: 20px;
-      padding: 20px;
-      background: #f1f1f1;
-      border-radius: 12px;
-      text-align: left;
-    }
+    const [fields, files] =
+      await form.parse(req);
 
-    .result-title {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-  </style>
-</head>
 
-<body>
+    const photo = files.photo?.[0];
 
-  <div class="container">
 
-    <h1>College Outfit AI</h1>
+    if (!photo) {
 
-    <p>Upload your photo and get an AI outfit recommendation.</p>
+      return res.status(400).json({
+        error: "Photo is required"
+      });
 
-    <input
-      type="file"
-      id="photoInput"
-      accept="image/*"
-      onchange="previewPhoto()"
-    >
-
-    <img id="preview">
-
-    <br>
-
-    <button onclick="analyzeOutfit()">
-      Analyze Outfit
-    </button>
-
-    <div id="loading">
-      AI is analyzing your photo...
-    </div>
-
-    <div id="result">
-
-      <div class="result-title">
-        AI Outfit Recommendation
-      </div>
-
-      <p id="recommendation"></p>
-
-    </div>
-
-  </div>
-
-  <script>
-
-    function previewPhoto() {
-
-      const file =
-        document.getElementById("photoInput").files[0];
-
-      const preview =
-        document.getElementById("preview");
-
-      if (!file) {
-        return;
-      }
-
-      preview.src = URL.createObjectURL(file);
-
-      preview.style.display = "block";
     }
 
 
-    async function analyzeOutfit() {
-
-      const file =
-        document.getElementById("photoInput").files[0];
-
-      const loading =
-        document.getElementById("loading");
-
-      const result =
-        document.getElementById("result");
-
-      const recommendation =
-        document.getElementById("recommendation");
+    const imageBuffer =
+      fs.readFileSync(photo.filepath);
 
 
-      if (!file) {
-
-        alert("Please select a photo first.");
-
-        return;
-      }
+    const base64Image =
+      imageBuffer.toString("base64");
 
 
-      loading.style.display = "block";
-
-      result.style.display = "none";
-
-
-      try {
-
-        /*
-          IMPORTANT:
-
-          This is where the real AI API
-          connection will be added.
-
-          The API should receive the
-          uploaded image and return
-          the outfit recommendation.
-        */
+    const mimeType =
+      photo.mimetype || "image/jpeg";
 
 
-        const formData = new FormData();
+    const client =
+      new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY
+      });
 
-        formData.append("photo", file);
 
+    const response =
+      await client.responses.create({
 
-        const response = await fetch(
-          "/api/analyze",
+        model: "gpt-4.1-mini",
+
+        input: [
           {
-            method: "POST",
-            body: formData
+            role: "user",
+
+            content: [
+
+              {
+                type: "input_text",
+
+                text: `
+Analyze this person's outfit and give a practical college outfit recommendation.
+
+Return:
+1. Current outfit
+2. What looks good
+3. Recommended shirt
+4. Recommended pants
+5. Recommended shoes
+6. Best colour combination
+7. Accessories
+8. Overall style rating out of 10
+
+Keep the recommendation realistic, simple and suitable for college.
+Do not identify the person's identity.
+                `
+              },
+
+              {
+                type: "input_image",
+
+                image_url:
+                  `data:${mimeType};base64,${base64Image}`
+              }
+
+            ]
           }
-        );
+        ]
+
+      });
 
 
-        if (!response.ok) {
+    return res.status(200).json({
 
-          throw new Error(
-            "AI server request failed"
-          );
+      recommendation:
+        response.output_text
 
-        }
+    });
 
-
-        const data =
-          await response.json();
+  }
 
 
-        recommendation.textContent =
-          data.recommendation;
+  catch (error) {
 
+    console.error(error);
 
-        result.style.display = "block";
+    return res.status(500).json({
 
-      }
+      error:
+        "AI analysis failed. Check the backend configuration."
 
-      catch (error) {
+    });
 
-        recommendation.textContent =
-          "AI connection is not configured yet. The website is ready, but the backend AI API still needs to be connected.";
+  }
 
-        result.style.display = "block";
+}
 
-        console.error(error);
-
-      }
-
-      finally {
-
-        loading.style.display = "none";
-
-      }
-
-    }
-
-  </script>
-
-</body>
-</html>
