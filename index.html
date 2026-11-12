@@ -1,3 +1,64 @@
-<h1>College Outfit AI</h1>
-<input type="file">
-<button>Upload a photo</button>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>College Outfit AI</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      color: #222;
+    }
+
+    input {
+      margin: 20px 0;
+    }
+
+    button {
+      padding: 12px 20px;
+      background: black;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #333;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>College Outfit AI</h1>
+
+  <input type="file" id="photoInput" accept="image/*">
+
+  <br><br>
+
+  <button onclick="uploadPhoto()">Upload a photo</button>
+
+  <p id="result"></p>
+
+  <script>
+    function uploadPhoto() {
+      const photo = document.getElementById("photoInput").files[0];
+      const result = document.getElementById("result");
+
+      if (!photo) {
+        result.textContent = "Please select a photo first.";
+        return;
+      }
+
+      result.textContent = "Photo selected successfully!";
+    }
+  </script>
+
+</body>
+</html>
